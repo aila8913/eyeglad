@@ -1,3 +1,20 @@
+import sys  # noqa E402
+import os  # noqa E402
+# os.chdir('C:/python-training/eyeglad')  # noqa E402
+# print(os.getcwd())  # noqa E402
+# # 添加模組路徑
+# sys.path.append('C:/python-training/eyeglad/use_SQL')  # noqa E402
+
+# 获取上一级目录路径
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa: E402
+# 将上一级目录添加到 sys.path
+sys.path.insert(0, parent_dir)  # noqa: E402
+
+# 打印调试信息，确保路径正确
+print(f"Parent directory: {parent_dir}")  # noqa: E402
+print(f"Files in parent directory: {os.listdir(parent_dir)}")  # noqa: E402
+
+
 # 設定工作目錄
 from sqlalchemy import inspect
 from use_SQL import getdata, log_in
@@ -6,13 +23,6 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import dash_table, dcc, html, Input, Output, State
 import dash
-import sys
-import os
-os.chdir('C:/python-training/eyeglad')
-print(os.getcwd())
-# 添加模組路徑
-sys.path.append('C:/python-training/eyeglad/use_SQL')
-
 
 database = 'amazon'
 
