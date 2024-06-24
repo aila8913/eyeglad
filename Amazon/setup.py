@@ -16,6 +16,8 @@ setup(
         'sqlalchemy',
         'python-dotenv',
         'psycopg2',
-        'gunicorn'
+        'gunicorn',
+        'dash_bootstrap_components',
+        'dash'
     ],
 )
