@@ -106,10 +106,10 @@ for file_name in os.listdir(folder_path):
     # Clean and insert data into SQL
     clean_and_insert_to_sql(file_path, original_table_name, engine)
 
-# 從資料庫讀取數據
+# # 從資料庫讀取數據
 
-table_name = "sponsored_products_targeting_report".lower()  # 替換為你的表名
-df = getdata.fetch_data_from_db(database=database, table=table_name)
+# table_name = "sponsored_products_targeting_report".lower()  # 替換為你的表名
+# df = getdata.fetch_data_from_db(database=database, table=table_name)
 
-# 檢查讀取的資料
-print(df)
+# # 檢查讀取的資料
+# print(df)
