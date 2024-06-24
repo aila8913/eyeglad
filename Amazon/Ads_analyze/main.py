@@ -86,7 +86,7 @@ app.layout = dbc.Container([
     )))
 ], fluid=True)
 
-# 回調函數動態加載表格數據
+# 合併回調函數，動態加載表格數據和更新圖表和表格
 
 
 @app.callback(
@@ -97,30 +97,31 @@ app.layout = dbc.Container([
      Output('filter-column', 'options'),
      Output('filter-column', 'value'),
      Output('table', 'columns'),
-     Output('table', 'data')],
-    [Input('table-dropdown', 'value')]
+     Output('table', 'data'),
+     Output('scatter-plot', 'figure')],
+    [Input('table-dropdown', 'value'),
+     Input('x-axis', 'value'),
+     Input('y-axis', 'value'),
+     Input('filter-column', 'value'),
+     Input('filter-value', 'value')]
 )
-def update_columns(table_name):
+def update_all(table_name, x_axis, y_axis, filter_column, filter_value):
+    # 獲取數據
     df = getdata.fetch_data_from_db(database=database, table=table_name)
+
+    # 為下拉菜單選項創建選項
     options = [{'label': col, 'value': col} for col in df.columns]
     columns = [{"name": i, "id": i} for i in df.columns]
     data = df.to_dict('records')
-    return options, df.columns[0], options, df.columns[1], options, df.columns[2], columns, data
 
-# 回調函數更新圖表和表格
+    # 確認初始值
+    if not x_axis or x_axis not in df.columns:
+        x_axis = df.columns[0]
+    if not y_axis or y_axis not in df.columns:
+        y_axis = df.columns[1]
+    if not filter_column or filter_column not in df.columns:
+        filter_column = df.columns[2] if len(df.columns) > 2 else df.columns[0]
 
-
-@app.callback(
-    [Output('scatter-plot', 'figure'),
-     Output('table', 'data')],
-    [Input('x-axis', 'value'),
-     Input('y-axis', 'value'),
-     Input('filter-column', 'value'),
-     Input('filter-value', 'value'),
-     State('table-dropdown', 'value')]
-)
-def update_chart(x_axis, y_axis, filter_column, filter_value, table_name):
-    df = getdata.fetch_data_from_db(database=database, table=table_name)
     # 過濾數據
     if filter_value:
         filtered_df = df[df[filter_column].astype(
@@ -131,10 +132,7 @@ def update_chart(x_axis, y_axis, filter_column, filter_value, table_name):
     # 創建圖表
     fig = px.scatter(filtered_df, x=x_axis, y=y_axis, color=filter_column)
 
-    # 更新表格數據
-    table_data = filtered_df.to_dict('records')
-
-    return fig, table_data
+    return options, x_axis, options, y_axis, options, filter_column, columns, data, fig
 
 
 # 運行應用

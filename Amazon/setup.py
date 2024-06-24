@@ -18,6 +18,7 @@ setup(
         'psycopg2',
         'gunicorn',
         'dash_bootstrap_components',
-        'dash'
+        'dash',
+        'pymysql'
     ],
 )
