@@ -1,1 +1,1 @@
-web: python Ads_analyze/main.py
+web: gunicorn Ads_analyize.main:app
