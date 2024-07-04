@@ -1,1 +1,1 @@
-web: gunicorn Ads_analyze.main:app
+web: gunicorn Ads_analyze.main:server

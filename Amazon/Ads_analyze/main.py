@@ -11,7 +11,14 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import dash_table, dcc, html, Input, Output, State
 import dash
+from flask import Flask
 
+# 初始化 Flask 伺服器
+server = Flask(__name__)
+
+# 初始化 Dash 應用
+app = dash.Dash(__name__, server=server,
+                external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # 打印调试信息，确保路径正确
 print(f"Parent directory: {parent_dir}")  # noqa: E402
@@ -28,9 +35,6 @@ inspector = inspect(engine)
 # 查詢所有表格
 tables = inspector.get_table_names()
 print("Tables:", '\n'.join(tables))
-
-# 初始化Dash應用
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # 應用佈局
 app.layout = dbc.Container([
@@ -162,6 +166,5 @@ def update_all(table_name, x_axis, y_axis, filter_column, filter_value, start_da
     return options, x_axis, options, y_axis, options, filter_column, columns, data, fig, options, size_column
 
 
-# 運行應用
 if __name__ == '__main__':
     app.run_server(debug=True)
