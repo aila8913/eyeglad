@@ -10,3 +10,6 @@ dash_bootstrap_components
 dash
 pymysql
 cryptography
+
+# gunicorn 要用
+fcntl
