@@ -1,26 +1,28 @@
 import sys  # noqa E402
 import os  # noqa E402
+
 # 获取上一级目录路径
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa: E402
 # 将上一级目录添加到 sys.path
 sys.path.insert(0, parent_dir)  # noqa: E402
-from sqlalchemy import inspect
-from use_pg_SQL import getdata, log_in
-import plotly.express as px
-import pandas as pd
-import dash_bootstrap_components as dbc
-from dash import dash_table, dcc, html, Input, Output, State
-import dash
-
 
 # 打印调试信息，确保路径正确
 print(f"Parent directory: {parent_dir}")  # noqa: E402
 print(f"Files in parent directory: {os.listdir(parent_dir)}")  # noqa: E402
 
 # 設定工作目錄
+from sqlalchemy import inspect
+from use_SQL import getdata, log_in
+import plotly.express as px
+import pandas as pd
+import dash_bootstrap_components as dbc
+from dash import dash_table, dcc, html, Input, Output, State
+import dash
 
-# 連接到 PostgreSQL 資料庫
-engine = log_in.log_in_pgSQL()
+database = 'amazon'
+
+# 連接到 MySQL 資料庫
+engine = log_in.log_in_mySQL(database)
 
 # 建立檢查器
 inspector = inspect(engine)
@@ -123,7 +125,7 @@ app.layout = dbc.Container([
 )
 def update_all(table_name, x_axis, y_axis, filter_column, filter_value, start_date, end_date, size_column):
     # 獲取數據
-    df = getdata.fetch_data_from_db(table=table_name)
+    df = getdata.fetch_data_from_db(database=database, table=table_name)
 
     # 為下拉菜單選項創建選項
     options = [{'label': col, 'value': col} for col in df.columns]
