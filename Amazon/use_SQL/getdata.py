@@ -14,7 +14,8 @@
 # print(f"Files in parent directory: {os.listdir(parent_dir)}")  # noqa: E402
 
 import pandas as pd
-from . import log_in
+# from . import log_in
+from use_SQL import log_in
 
 
 def fetch_data_from_db(database, table):

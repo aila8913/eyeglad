@@ -1,12 +1,12 @@
 import pandas as pd
-from sqlalchemy import create_engine, text, inspect
+from sqlalchemy import create_engine, inspect
 import log_in
 
 # 連接到資料庫
-engine = log_in.log_in_mySQL()
+engine = log_in.log_in_pgSQL()
 
-# 要操作的表格名稱
-table_name = "sakila"  # 修改为你实际要操作的表名
+# 要查詢的表格名稱
+table_name = "taiwan_stock_index_10y"
 
 
 def check_table_exists(engine, table_name):
@@ -20,20 +20,7 @@ def get_table_data(engine, table_name):
     return df
 
 
-def drop_table(engine, table_name):
-    drop_table_query = text(f"DROP TABLE IF EXISTS {table_name}")
-    try:
-        with engine.connect() as conn:  # 使用 connect() 確保提交事務
-            conn.execute(drop_table_query)
-            print(f"表格 {table_name} 刪除成功")
-    except Exception as e:
-        print(f"刪除表格時發生錯誤: {e}")
-
-
 try:
-    # 刪除表格
-    drop_table(engine, table_name)
-
     # 檢查表格是否存在
     if check_table_exists(engine, table_name):
         print(f"表格 {table_name} 存在。")

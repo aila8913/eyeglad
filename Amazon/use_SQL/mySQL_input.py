@@ -89,7 +89,7 @@ os.chdir('C:/python-training/eyeglad')
 print(os.getcwd())
 
 # Define target folder
-target_folder = '0621_AmazonAds_data'
+target_folder = '0702_AmazonAds_data'
 folder_path = f'Amazon/data/{target_folder}'
 
 database = 'amazon'
