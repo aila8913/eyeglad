@@ -57,6 +57,10 @@ def clean_and_insert_to_sql(file_path, original_table_name, engine, target_folde
     # Clean column names
     df.columns = [get_clean_column_name(col) for col in df.columns]
 
+    # 計算TACoS
+    df['TACoS'] = df.apply(lambda row: row['Spend'] / row['seven_Day_Total_Sales']
+                           if row['seven_Day_Total_Sales'] != 0 else 0, axis=1)
+
     # Clean table name
     table_name = f'{target_folder[:7]}{get_clean_table_name(original_table_name)}'
     print(f'TABLE_NAME: {table_name}')
@@ -91,10 +95,13 @@ def clean_and_insert_to_sql(file_path, original_table_name, engine, target_folde
 os.chdir('C:/python-training/eyeglad/Amazon/data')
 print(os.getcwd())
 
+
 # 一個檔案匯進 SQL
-target_folder = '240702_AmazonAds_data'
+date = '240702'
+target_folder = f'{date}_AmazonAds_data'
 file_name = 'Sponsored Products Search term report'
 file_path = f'{target_folder}/Sponsored Products Search term report.xlsx'
+
 # Connect to PostgreSQL database
 engine = log_in.log_in_pgSQL()  # 假設您有一個PostgreSQL的連接函數
 

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User List Example</title>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const userList = document.getElementById("user-list");
+        const addUserButton = document.getElementById("add-user");
+
+        // 添加新用戶
+        addUserButton.addEventListener("click", function () {
+          const newUser = document.createElement("li");
+          newUser.textContent = "New User";
+          userList.appendChild(newUser);
+        });
+
+        // 更新用戶信息
+        const updateUser = document.createElement("button");
+        updateUser.textContent = "Update User";
+        document.body.appendChild(updateUser);
+
+        updateUser.addEventListener("click", function () {
+          const firstUser = userList.querySelector("li");
+          if (firstUser) {
+            firstUser.textContent = "Updated User";
+            firstUser.setAttribute("style", "color: red;");
+          }
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <h1>User List</h1>
+    <ul id="user-list">
+      <li>John Doe</li>
+      <li>Jane Smith</li>
+    </ul>
+    <button id="add-user">Add User</button>
+  </body>
+</html>
