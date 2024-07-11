@@ -1,38 +1,88 @@
-from flask import Flask, jsonify
+import sys  # noqa E402
+import sys  # noqa E402
+import os  # noqa E402
+# 获取上一级目录路径
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa: E402
+# 将上一级目录添加到 sys.path
+sys.path.insert(0, parent_dir)  # noqa: E402
+
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from sqlalchemy import inspect
 import pandas as pd
+import dash
+import dash_bootstrap_components as dbc
+from use_pg_SQL import log_in
+from tool.layout import create_layout
+from tool.callbacks import register_callbacks
 
-app = Flask(__name__)
+# 获取上一级目录路径
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa: E402
+# 将上一级目录添加到 sys.path
+sys.path.insert(0, parent_dir)  # noqa: E402
 
-# 模擬數據庫表
-tables = {
-    'table1': pd.DataFrame({
-        'col1': [1, 2, 3],
-        'col2': [4, 5, 6],
-        'col3': [7, 8, 9]
-    }),
-    'table2': pd.DataFrame({
-        'colA': ['A', 'B', 'C'],
-        'colB': ['D', 'E', 'F'],
-        'colC': ['G', 'H', 'I']
-    })
-}
+# 初始化 Flask 伺服器
+server = Flask(__name__)
+# 啟用 CORS，允許所有來源的請求
+CORS(server, resources={r"/*": {"origins": "*"}})
+
+# 初始化 Dash 应用
+app = dash.Dash(__name__, server=server,
+                external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 
-@app.route('/api/tables')
+# 连接到 PostgreSQL 数据库
+engine = log_in.log_in_pgSQL()
+
+# 建立检查器
+inspector = inspect(engine)
+
+# 查询所有表格
+tables = inspector.get_table_names()
+print("Tables:", '\n'.join(tables))
+
+# 设置工作目录
+app.layout = create_layout(tables)
+
+# 注册回调函数
+register_callbacks(app)
+
+# 定义 API 路由
+
+
+@server.route('/api/tables')
 def get_tables():
-    return jsonify(list(tables.keys()))
+    return jsonify(tables)
 
 
-@app.route('/api/table/<table_name>')
+@server.route('/api/table/<table_name>')
 def get_table_data(table_name):
-    if table_name in tables:
-        df = tables[table_name]
-        data = df.to_dict(orient='records')
-        columns = df.columns.tolist()
-        return jsonify({'columns': columns, 'data': data})
-    else:
-        return jsonify({'error': 'Table not found'}), 404
+    try:
+        if table_name in tables:
+            query = f'SELECT * FROM "{table_name}"'
+            data = pd.read_sql(query, engine)
+            columns = list(data.columns)
+            print(
+                f"Returning data for table {table_name}: columns={columns}, data={data.to_dict(orient='records')}")
+            return jsonify({'columns': columns, 'data': data.to_dict(orient='records')})
+        else:
+            return jsonify({'error': 'Table not found'}), 404
+    except Exception as e:
+        print(f"Error retrieving data for table {table_name}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+    try:
+        if table_name in tables:
+            query = f'SELECT * FROM "{table_name}"'
+            data = pd.read_sql(query, engine)
+            columns = list(data.columns)
+            return jsonify({'columns': columns, 'data': data.to_dict(orient='records')})
+        else:
+            return jsonify({'error': 'Table not found'}), 404
+    except Exception as e:
+        print(f"Error retrieving data for table {table_name}: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    server.run(debug=True, port=5000)
