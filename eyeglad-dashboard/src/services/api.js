@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:8050/api"; // 更新為 Flask 後端服務的地址
+const API_URL = "http://127.0.0.1:5000/api"; // 更新為 Flask 後端服務的地址
 
 export const fetchTables = () => {
   return axios.get(`${API_URL}/tables`);

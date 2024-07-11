@@ -10,46 +10,44 @@ const App = () => {
   const [columns, setColumns] = useState([]);
   const [data, setData] = useState([]);
   const [chartData, setChartData] = useState({});
-  const [xAxis, setXAxis] = useState("");
-  const [yAxis, setYAxis] = useState("");
+  const [xAxis, setXAxis] = useState("Date");
+  const [yAxis, setYAxis] = useState("TACoS");
 
   useEffect(() => {
     fetchTables()
       .then((response) => {
-        setTables(response.data);
-        setSelectedTable(response.data[0]);
         console.log("Fetched tables:", response.data);
+        setTables(response.data);
+        setSelectedTable(response.data[response.data.length - 1]);
       })
       .catch((error) => console.error("Error fetching tables:", error));
   }, []);
 
   useEffect(() => {
     if (selectedTable) {
-      console.log(`Fetching data for table: ${selectedTable}`);
       fetchTableData(selectedTable)
         .then((responseData) => {
           if (responseData) {
-            console.log("Table data response:", responseData);
-
-            // 確認 responseData 的結構
-            console.log(
-              "Response data structure:",
-              JSON.stringify(responseData, null, 2)
-            );
-            console.log("Columns: ", responseData.columns);
-            console.log("Data: ", responseData.data);
-
-            // 檢查 responseData.columns 和 responseData.data 是否為數組
+            console.log("Fetched table data:", responseData);
             if (
               Array.isArray(responseData.columns) &&
               Array.isArray(responseData.data)
             ) {
               setColumns(responseData.columns);
-              setData(responseData.data);
-              console.log("Columns set:", responseData.columns);
-              console.log("Data set:", responseData.data);
+              const sanitizedData = responseData.data.map((row) => {
+                const sanitizedRow = {};
+                for (const key in row) {
+                  sanitizedRow[key] =
+                    typeof row[key] === "number" && isNaN(row[key])
+                      ? 0
+                      : row[key];
+                }
+                return sanitizedRow;
+              });
+              console.log("Sanitized data:", sanitizedData);
+              setData(sanitizedData);
             } else {
-              console.error("Invalid data structure");
+              console.error("Invalid data structure:", responseData);
             }
           } else {
             console.error("No data returned from API");
@@ -68,9 +66,15 @@ const App = () => {
             label: yAxis,
             data: data.map((row) => row[yAxis]),
             backgroundColor: "rgba(75, 192, 192, 0.6)",
+            borderWidth: 0,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            barThickness: 5, // 固定條形寬度
+            barHoverRadius: 10,
           },
         ],
       };
+      console.log("Chart data:", chartData);
       setChartData(chartData);
     }
   }, [xAxis, yAxis, data]);
@@ -79,9 +83,8 @@ const App = () => {
     return <div>Loading...</div>;
   }
 
-  return (
-    <div className="container">
-      <h1 className="mb-4">EYEGLAD AmazonADs</h1>
+  const renderDropdowns = () => (
+    <>
       <Dropdown
         id="table-select"
         label="選擇表格"
@@ -111,22 +114,38 @@ const App = () => {
         value={yAxis}
         onChange={setYAxis}
       />
-      {data.length > 0 ? (
+    </>
+  );
+
+  const renderChart = () => {
+    if (data.length > 0) {
+      return (
         <ChartComponent
           data={chartData}
           options={{ responsive: true }}
           type="bar"
         />
-      ) : (
-        <div>Loading chart data...</div>
-      )}
-      {/* 添加loading狀態 */}
+      );
+    } else {
+      return <div>Loading chart data...</div>;
+    }
+  };
+
+  const renderDataTable = () => {
+    if (columns.length > 0 && data.length > 0) {
+      return <DataTable columns={columns} data={data} />;
+    } else {
+      return <div>Loading table data...</div>;
+    }
+  };
+
+  return (
+    <div className="container">
+      <h1 className="mb-4">EYEGLAD AmazonADs</h1>
+      {renderDropdowns()}
+      {renderChart()}
       <h2 className="mt-4">數據表</h2>
-      {columns.length > 0 && data.length > 0 ? (
-        <DataTable columns={columns} data={data} />
-      ) : (
-        <div>Loading table data...</div>
-      )}
+      {renderDataTable()}
     </div>
   );
 };
