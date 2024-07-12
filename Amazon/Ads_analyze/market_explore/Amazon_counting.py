@@ -63,8 +63,10 @@ def star_comment_count(df):
     :param df: 包含評分數據的數據框
     :return: 包含品牌和加權評分的數據框
     """
-    df['加權評分'] = df['星星評分'].astype(float) * df['全球評分數量']
-    top_brands_rated = df.groupby('品牌名稱')['加權評分'].sum().reset_index()
+    df['Weighted Rating'] = df['Star Rating'].astype(
+        float) * df['Global Rating Count']
+    top_brands_rated = df.groupby('Brand Name')[
+        'Weighted Rating'].sum().reset_index()
     return top_brands_rated
 
 
@@ -111,8 +113,8 @@ def analyze_keywords_and_sales(df, input_text, target, top_n_keywords=20):
     keywords_counts = Counter(all_words)
 
     for word in keywords_counts.keys():
-        df['詞'] = df[input_text].apply(lambda x: word in x)
-        total_sales = df[df['詞']][target].sum()
+        df['Word'] = df[input_text].apply(lambda x: word in x)
+        total_sales = df[df['Word']][target].sum()
         recently_use[word] = total_sales
         keywords_sales[word] = total_sales / keywords_counts[word]
 

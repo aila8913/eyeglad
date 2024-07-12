@@ -95,21 +95,21 @@ def clean_and_insert_to_sql(file_path, original_table_name, engine, target_folde
 os.chdir('C:/python-training/eyeglad/Amazon/data')
 print(os.getcwd())
 
+# # Amazon 廣告數據: 一個檔案匯進 SQL
+# date = '240702'
+# target_folder = f'{date}_AmazonAds_data'
+# file_name = 'Sponsored Products Search term report'
+# file_path = f'{target_folder}/Sponsored Products Search term report.xlsx'
 
-# 一個檔案匯進 SQL
-date = '240702'
-target_folder = f'{date}_AmazonAds_data'
-file_name = 'Sponsored Products Search term report'
-file_path = f'{target_folder}/Sponsored Products Search term report.xlsx'
+# # Connect to PostgreSQL database
+# engine = log_in.log_in_pgSQL()  # 假設您有一個PostgreSQL的連接函數
 
-# Connect to PostgreSQL database
-engine = log_in.log_in_pgSQL()  # 假設您有一個PostgreSQL的連接函數
+# # Get the table name by removing the file extension
+# original_table_name = os.path.splitext(file_name)[0]
 
-# Get the table name by removing the file extension
-original_table_name = os.path.splitext(file_name)[0]
+# # Clean and insert data into SQL
+# clean_and_insert_to_sql(file_path, original_table_name, engine, target_folder)
 
-# Clean and insert data into SQL
-clean_and_insert_to_sql(file_path, original_table_name, engine, target_folder)
 
 # 批量匯入
 # # Define target folder

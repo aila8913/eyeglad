@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import ast
 # 讀取數據
 df = pd.read_csv(
-    '爬蟲/0530_Aamazon_sunglasses+men/Amazon商品資料_sunglasses+men_加月銷量.csv')
+    'C:/python-training/eyeglad/Amazon/data/marketing/240711_AmazonSales_OverFitGlasses.csv')
 thing = 'sunglasses+men'
 # 檢查數據
 # print(df.head())
@@ -18,41 +18,45 @@ print(df.columns.tolist())  # 第一直列的數據
 # 2. 品牌旗艦店
 # 3. 商品名稱 (關鍵字)
 # 4. 網址
-# 5. 商品定價 (C)
-# 6. 星星評分 (C)
-# 7. 全球評分數量 (C)
-# 8. 顏色選項 (C)
+# 5. Price (C)
+# 6. Star Rating (C)
+# 7. Global Rating Count (C)
+# 8. Color Options (C)
 # 9. 商品描述 (關鍵字)
 # 10. 產品資訊 (關鍵字)
-# 11. 全球排名 (C)
+# 11. Global Ranking (C)
 # 12. 留言網址
 # 13. 圖片文件
-# 14. 有無影片 (C)
-# 15. 過去一個月銷量 (C)
-# 5. 商品定價
+# 14. Has Video (C)
+# 15. Sales in the Last Month (C)
+# 5. Price
 # 移除商品定價中的美元符號並轉換為浮點數
 
 
 def clean_price(df):
     replace_str = [' for Taiwan', '$', '.(.2.44 / Count)', '.Free Return on some sizes and colors',  '.(.23.99 / Count)', '.(.5.86 / Count)', '.(.6.66 / Count)', '.(.63.61 / Pound)',
                    '.(.78.35 / Pound)', '.(.9.00 / Count)', '.FREE Returns', '.(.0.87 / Gram)', '.FREE International Returns']
-    for i in replace_str:
-        df['商品定價'] = df['商品定價'].astype(str).str.replace(i, '')
-    df['商品定價'] = df['商品定價'].str.replace(
-        'Price: See price in cart', '0').astype(float)
-    return df['商品定價']
+    # for i in replace_str:
+    #     df['Price'] = df['Price'].astype(str).str.replace(i, '')
+    # df['Price'] = df['Price'].str.replace(
+    #     'Price: See price in cart', '0').astype(float)
+    df['Price'] = df['Price'].astype(str).str.replace('$', '')
+    df['Price'] = df['Price'].astype(str).str.replace(' ', '.')
+    df['Price'] = df['Price'].astype(str).str.replace('\n', '.')
+    return df['Price']
 # 6/7. 處理評分數量
 
 
 def clean_star(df):
-    df['星星評分'] = df['星星評分'].astype(str).str.replace('沒有星等', '0')
-    df['星星評分'] = df['星星評分'].astype(float)
+    df['Star Rating'] = df['Star Rating'].astype(str).str.replace('沒有星等', '0')
+    df['Star Rating'] = df['Star Rating'].astype(float)
     replace_star = [',', ' rating']
     for i in replace_star:
-        df['全球評分數量'] = df['全球評分數量'].astype(str).str.replace(i, '')
-    df['全球評分數量'] = df['全球評分數量'].astype(int)
-    return df['星星評分'], df['全球評分數量']
-# 8. 顏色選項
+        df['Global Rating Count'] = df['Global Rating Count'].astype(
+            str).str.replace(i, '')
+    df['Global Rating Count'] = df['Global Rating Count'].astype(int)
+    return df['Star Rating'], df['Global Rating Count']
+# 8. Color Options
 
 
 def to_list(x):
@@ -62,12 +66,12 @@ def to_list(x):
 
 
 def clean_color(df):  # 搭配 to_list()
-    # 应用函数将'顏色選項'列转换为列表
-    df['顏色選項'] = df['顏色選項'].apply(to_list)
+    # 应用函数将'Color Options'列转换为列表
+    df['Color Options'] = df['Color Options'].apply(to_list)
     # 计算每个商品的颜色数量
-    df['顏色數量'] = df['顏色選項'].apply(
+    df['Color Count'] = df['Color Options'].apply(
         lambda x: len(x) if isinstance(x, list) else 0)
-    return df['顏色數量']
+    return df['Color Count']
 
 
 def str_to_dic(data):
@@ -81,23 +85,27 @@ def str_to_dic(data):
 
 def clean_ranking(df):  # 搭配 str_to_dic()
     # 應用清洗函數
-    df['全球排名'] = df['全球排名'].apply(str_to_dic)
+    df['Global Ranking'] = df['Global Ranking'].apply(str_to_dic)
 
     # 顯示清洗後的數據
-    return df['全球排名']
+    return df['Global Ranking']
 # 14. 影片
 
 
 def clean_video(df):
-    df['有無影片'] = df['有無影片'].fillna(0)
-    return df['有無影片']
-# 15. 過去一個月銷量
+    df['Has Video'] = df['Has Video'].fillna(0)
+    return df['Has Video']
+# 15. Sales in the Last Month
 
 
 def clean_monthly_sales(df):
-    df['過去一個月銷量'] = df['過去一個月銷量'].astype(str).str.replace('+', '')
-    df['過去一個月銷量'] = df['過去一個月銷量'].astype(str).str.replace('K', '000')
-    df['過去一個月銷量'] = df['過去一個月銷量'].astype(str).str.replace('no data', '0')
-    df['過去一個月銷量'] = df['過去一個月銷量'].astype(int)
-    df['過去一個月銷量'] = df['過去一個月銷量'].fillna(df['過去一個月銷量'].mean())
-    return df['過去一個月銷量']
+    df['Sales in the Last Month'] = df['Sales in the Last Month'].astype(
+        str).str.replace('+', '')
+    df['Sales in the Last Month'] = df['Sales in the Last Month'].astype(
+        str).str.replace('K', '000')
+    df['Sales in the Last Month'] = df['Sales in the Last Month'].astype(
+        str).str.replace('no data', '0')
+    df['Sales in the Last Month'] = df['Sales in the Last Month'].astype(int)
+    df['Sales in the Last Month'] = df['Sales in the Last Month'].fillna(
+        df['Sales in the Last Month'].mean())
+    return df['Sales in the Last Month']
