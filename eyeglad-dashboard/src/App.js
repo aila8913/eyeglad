@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Routes, Link } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import EyegladAmazonADs from "./components/EyegladAmazonADs";
 import AmazonMarketing from "./components/AmazonMarketing";
 
