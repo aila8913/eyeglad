@@ -10,3 +10,4 @@ dash_bootstrap_components
 dash
 pymysql
 cryptography
+flask_cors
