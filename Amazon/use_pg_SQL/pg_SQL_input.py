@@ -2,7 +2,8 @@ import os
 import pandas as pd
 from sqlalchemy import create_engine, text
 import log_in
-import getdata
+# from use_pg_SQL import log_in
+# import getdata
 
 
 def infer_sqlalchemy_type(column):
@@ -93,7 +94,7 @@ print(os.getcwd())
 
 # # Amazon 市場調查
 file_name = '240711_AmazonSales_OverFitGlasses'
-file_path = 'C:/python-training/eyeglad/Amazon/data/marketing/240711_AmazonSales_OverFitGlasses.csv'
+file_path = f'C:/python-training/eyeglad/Amazon/data/{file_name}.csv'
 # Connect to PostgreSQL database
 engine = log_in.log_in_pgSQL()  # 假設您有一個PostgreSQL的連接函數
 

@@ -1,0 +1,12 @@
+psycopg2
+pandas
+sqlalchemy
+python-dotenv
+flask
+plotly
+psycopg2
+gunicorn
+dash_bootstrap_components
+dash
+pymysql
+cryptography

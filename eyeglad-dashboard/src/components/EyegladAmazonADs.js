@@ -20,9 +20,11 @@ const EyegladAmazonADs = () => {
   useEffect(() => {
     fetchTables()
       .then((response) => {
-        setTables(response.data);
-        if (response.data.length > 0) {
-          setSelectedTable(response.data[0]);
+        console.log("Tables fetched:", response); // 添加日誌
+        const tableData = Array.isArray(response) ? response : [];
+        setTables(tableData);
+        if (tableData.length > 0) {
+          setSelectedTable(tableData[0]);
         }
       })
       .catch((error) => console.error("Error fetching tables:", error));
@@ -32,10 +34,15 @@ const EyegladAmazonADs = () => {
     if (selectedTable) {
       fetchTableData(selectedTable)
         .then((responseData) => {
-          if (responseData) {
-            setColumns(responseData.columns);
-            setData(responseData.data);
-          }
+          console.log("Table data fetched:", responseData); // 添加日誌
+          const columnData = Array.isArray(responseData.columns)
+            ? responseData.columns
+            : [];
+          const tableData = Array.isArray(responseData.data)
+            ? responseData.data
+            : [];
+          setColumns(columnData);
+          setData(tableData);
         })
         .catch((error) => console.error("Error fetching table data:", error));
     }
@@ -72,35 +79,35 @@ const EyegladAmazonADs = () => {
       <Dropdown
         id="table-select"
         label="選擇表格"
-        options={tables.map((table) => ({ label: table, value: table }))}
+        options={tables.map((table) => ({ label: table, value: table })) || []}
         value={selectedTable}
         onChange={setSelectedTable}
       />
       <Dropdown
         id="x-axis-select"
         label="選擇X軸"
-        options={columns.map((col) => ({ label: col, value: col }))}
+        options={columns.map((col) => ({ label: col, value: col })) || []}
         value={xAxis}
         onChange={setXAxis}
       />
       <Dropdown
         id="y-axis-select"
         label="選擇Y軸"
-        options={columns.map((col) => ({ label: col, value: col }))}
+        options={columns.map((col) => ({ label: col, value: col })) || []}
         value={yAxis}
         onChange={setYAxis}
       />
       <Dropdown
         id="filter-column-select"
         label="篩選條件"
-        options={columns.map((col) => ({ label: col, value: col }))}
+        options={columns.map((col) => ({ label: col, value: col })) || []}
         value={filterColumn}
         onChange={setFilterColumn}
       />
       <Dropdown
         id="point-size-column-select"
         label="選擇點大小列"
-        options={columns.map((col) => ({ label: col, value: col }))}
+        options={columns.map((col) => ({ label: col, value: col })) || []}
         value={pointSizeColumn}
         onChange={setPointSizeColumn}
       />
