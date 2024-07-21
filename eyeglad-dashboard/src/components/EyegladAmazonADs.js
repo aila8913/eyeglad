@@ -20,11 +20,15 @@ const EyegladAmazonADs = () => {
   useEffect(() => {
     fetchTables()
       .then((response) => {
-        console.log("Tables fetched:", response); // 添加日誌
+        console.log("Tables fetched:", response);
         const tableData = Array.isArray(response) ? response : [];
-        setTables(tableData);
-        if (tableData.length > 0) {
-          setSelectedTable(tableData[0]);
+        const adTables = tableData.filter(
+          (table) => !table.includes("AmazonSales")
+        );
+        setTables(adTables);
+        console.log("Filtered AD Tables:", adTables);
+        if (adTables.length > 0) {
+          setSelectedTable(adTables[0]);
         }
       })
       .catch((error) => console.error("Error fetching tables:", error));
@@ -83,6 +87,10 @@ const EyegladAmazonADs = () => {
         value={selectedTable}
         onChange={setSelectedTable}
       />
+      {console.log(
+        "Dropdown options:",
+        tables.map((table) => ({ label: table, value: table })) || []
+      )}
       <Dropdown
         id="x-axis-select"
         label="選擇X軸"

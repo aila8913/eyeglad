@@ -1,33 +1,36 @@
 import React from "react";
 import PropTypes from "prop-types";
+import "../css/DataTable.css"; // 引入CSS文件
 
 const DataTable = ({ columns, data }) => (
-  <table className="table">
-    <thead>
-      <tr>
-        {columns.map((col) => (
-          <th key={col}>{col}</th>
-        ))}
-      </tr>
-    </thead>
-    <tbody>
-      {data.length > 0 ? (
-        data.map((row, index) => (
-          <tr key={index}>
-            {columns.map((col) => (
-              <td key={col}>{row[col]}</td>
-            ))}
-          </tr>
-        ))
-      ) : (
+  <div className="scrollable-table-container">
+    <table className="table">
+      <thead>
         <tr>
-          <td colSpan={columns.length} className="text-center">
-            無數據
-          </td>
+          {columns.map((col) => (
+            <th key={col}>{col}</th>
+          ))}
         </tr>
-      )}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {data.length > 0 ? (
+          data.map((row, index) => (
+            <tr key={index}>
+              {columns.map((col) => (
+                <td key={col}>{row[col]}</td>
+              ))}
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={columns.length} className="text-center">
+              無數據
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
 );
 
 DataTable.propTypes = {
