@@ -1,1 +1,2 @@
-web: gunicorn Ads_analyze.main:server
+web: concurrently "python app.py" "npm start"
+
