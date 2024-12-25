@@ -1,4 +1,76 @@
-.scrollable-table-container {
-  overflow-x: auto;
-  max-height: 400px;
+/* DataTable.css */
+
+/* 標題樣式 */
+th {
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-bottom: 2px solid #dee2e6;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px; /* 設置最大寬度 */
+}
+
+/* 行樣式 */
+tr {
+  border-bottom: 1px solid #dee2e6;
+}
+
+td {
+  padding: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px; /* 設置最大寬度 */
+}
+
+/* 展開行樣式 */
+.expanded-row {
+  background-color: #f1f3f5;
+  padding: 10px;
+  border-top: 1px solid #dee2e6;
+}
+
+/* 展開按鈕樣式 */
+span[role="button"] {
+  cursor: pointer;
+}
+
+span[role="button"]:hover {
+  color: #007bff;
+}
+
+/* 篩選輸入框樣式 */
+input[type="text"] {
+  width: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+/* 日期範圍選擇樣式 */
+.date-range-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.date-range-filter input[type="date"] {
+  padding: 5px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+/* Dropdown 樣式 */
+.dropdown {
+  margin-bottom: 10px;
+}
+
+.dropdown select {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
 }

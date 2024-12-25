@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { fetchTables, fetchTableData } from "../services/api";
 import Dropdown from "./Dropdown";
 import ChartComponent from "./ChartComponent";
 import DataTable from "./DataTable";
+import "../App.css"; // 導入 CSS 文件
 
 const AmazonMarketing = () => {
   const [tables, setTables] = useState([]);
@@ -20,13 +21,11 @@ const AmazonMarketing = () => {
   useEffect(() => {
     fetchTables()
       .then((response) => {
-        console.log("Tables fetched:", response);
         const tableData = Array.isArray(response) ? response : [];
         const salesTables = tableData.filter((table) =>
           table.includes("AmazonSales")
         );
         setTables(salesTables);
-        console.log("Filtered Sales Tables:", salesTables);
         if (salesTables.length > 0) {
           setSelectedTable(salesTables[0]);
         }
@@ -38,17 +37,17 @@ const AmazonMarketing = () => {
     if (selectedTable) {
       fetchTableData(selectedTable)
         .then((responseData) => {
-          console.log("Table data fetched:", responseData);
           const columnData = Array.isArray(responseData.columns)
-            ? responseData.columns
+            ? responseData.columns.map((col) => ({
+                Header: col,
+                accessor: col,
+              }))
             : [];
           const tableData = Array.isArray(responseData.data)
             ? responseData.data
             : [];
           setColumns(columnData);
           setData(tableData);
-          console.log("Columns state updated:", columnData);
-          console.log("Data state updated:", tableData);
         })
         .catch((error) => console.error("Error fetching table data:", error));
     }
@@ -98,6 +97,15 @@ const AmazonMarketing = () => {
     setChartData(chartData);
   }, [data, xAxis, yAxis, filterColumn, pointSizeColumn, startDate, endDate]);
 
+  const columnsForTable = useMemo(
+    () =>
+      columns.map((col) => ({
+        Header: col.Header,
+        accessor: col.accessor,
+      })),
+    [columns]
+  );
+
   return (
     <div>
       <h2>Amazon Marketing</h2>
@@ -111,14 +119,20 @@ const AmazonMarketing = () => {
       <Dropdown
         id="x-axis-select"
         label="選擇X軸"
-        options={columns.map((col) => ({ label: col, value: col })) || []}
+        options={
+          columns.map((col) => ({ label: col.Header, value: col.accessor })) ||
+          []
+        }
         value={xAxis}
         onChange={setXAxis}
       />
       <Dropdown
         id="y-axis-select"
         label="選擇Y軸"
-        options={columns.map((col) => ({ label: col, value: col })) || []}
+        options={
+          columns.map((col) => ({ label: col.Header, value: col.accessor })) ||
+          []
+        }
         value={yAxis}
         onChange={setYAxis}
       />
@@ -135,7 +149,10 @@ const AmazonMarketing = () => {
       <Dropdown
         id="point-size-column-select"
         label="選擇點大小列"
-        options={columns.map((col) => ({ label: col, value: col })) || []}
+        options={
+          columns.map((col) => ({ label: col.Header, value: col.accessor })) ||
+          []
+        }
         value={pointSizeColumn}
         onChange={setPointSizeColumn}
       />
@@ -158,7 +175,7 @@ const AmazonMarketing = () => {
         </div>
       </div>
       <ChartComponent data={chartData} type="line" xAxis={xAxis} />
-      <DataTable columns={columns} data={data} />
+      <DataTable columns={columnsForTable} data={data} />
     </div>
   );
 };

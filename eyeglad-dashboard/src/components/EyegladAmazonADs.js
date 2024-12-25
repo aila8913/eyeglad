@@ -1,8 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { fetchTables, fetchTableData } from "../services/api";
 import Dropdown from "./Dropdown";
-import ChartComponent from "./ChartComponent";
+import DateRangeFilter from "./DateRangeFilter";
+import FilterInput from "./FilterInput";
+import ChartWrapper from "./ChartWrapper";
 import DataTable from "./DataTable";
+import "../css/DataTable.css"; // 導入 CSS 文件
+
+const DefaultColumnFilter = ({
+  column: { filterValue, preFilteredRows, setFilter },
+}) => {
+  const count = preFilteredRows.length;
+
+  return (
+    <input
+      value={filterValue || ""}
+      onChange={(e) => {
+        setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
+      }}
+      placeholder={`篩選... (${count})`}
+    />
+  );
+};
 
 const EyegladAmazonADs = () => {
   const [tables, setTables] = useState([]);
@@ -10,9 +29,11 @@ const EyegladAmazonADs = () => {
   const [columns, setColumns] = useState([]);
   const [data, setData] = useState([]);
   const [chartData, setChartData] = useState({});
-  const [xAxis, setXAxis] = useState("Date");
+  const [xAxis, setXAxis] = useState("Targeting");
   const [yAxis, setYAxis] = useState("TACoS");
-  const [filterColumn, setFilterColumn] = useState("Targeting");
+  const [filterColumn, setFilterColumn] = useState("TACoS");
+  const [filterValue, setFilterValue] = useState("");
+  const [filterValues, setFilterValues] = useState({});
   const [pointSizeColumn, setPointSizeColumn] = useState("Spend");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -20,13 +41,11 @@ const EyegladAmazonADs = () => {
   useEffect(() => {
     fetchTables()
       .then((response) => {
-        console.log("Tables fetched:", response);
         const tableData = Array.isArray(response) ? response : [];
         const adTables = tableData.filter(
           (table) => !table.includes("AmazonSales")
         );
         setTables(adTables);
-        console.log("Filtered AD Tables:", adTables);
         if (adTables.length > 0) {
           setSelectedTable(adTables[0]);
         }
@@ -38,9 +57,11 @@ const EyegladAmazonADs = () => {
     if (selectedTable) {
       fetchTableData(selectedTable)
         .then((responseData) => {
-          console.log("Table data fetched:", responseData); // 添加日誌
           const columnData = Array.isArray(responseData.columns)
-            ? responseData.columns
+            ? responseData.columns.map((col) => ({
+                Header: col,
+                accessor: col,
+              }))
             : [];
           const tableData = Array.isArray(responseData.data)
             ? responseData.data
@@ -52,14 +73,45 @@ const EyegladAmazonADs = () => {
     }
   }, [selectedTable]);
 
+  const handleFilterChange = (column, value) => {
+    setFilterValues((prev) => ({ ...prev, [column]: value }));
+  };
+
   useEffect(() => {
     let filteredData = data;
+
+    // 應用日期篩選
     if (startDate && endDate) {
       filteredData = filteredData.filter((row) => {
         const date = new Date(row.Date);
         return date >= new Date(startDate) && date <= new Date(endDate);
       });
     }
+
+    // 應用列篩選
+    Object.keys(filterValues).forEach((column) => {
+      const filterValue = filterValues[column];
+      if (filterValue) {
+        filteredData = filteredData.filter((row) => {
+          const value = row[column];
+          if (typeof value === "string") {
+            return value.includes(filterValue);
+          } else if (typeof value === "number") {
+            if (filterValue.startsWith(">")) {
+              const minValue = parseFloat(filterValue.slice(1));
+              return value > minValue;
+            } else if (filterValue.startsWith("<")) {
+              const maxValue = parseFloat(filterValue.slice(1));
+              return value < maxValue;
+            } else if (filterValue.includes("-")) {
+              const [min, max] = filterValue.split("-").map(parseFloat);
+              return value > min && value < max;
+            }
+          }
+          return true;
+        });
+      }
+    });
 
     const chartData = {
       labels: filteredData.map((row) => row[xAxis]),
@@ -75,7 +127,19 @@ const EyegladAmazonADs = () => {
       ],
     };
     setChartData(chartData);
-  }, [data, xAxis, yAxis, startDate, endDate]);
+    setData(filteredData); // 更新篩選後的數據
+  }, [data, xAxis, yAxis, startDate, endDate, filterValues]);
+
+  const columnsForTable = useMemo(
+    () =>
+      columns.map((col) => ({
+        Header: col.Header,
+        accessor: col.accessor,
+        Filter: DefaultColumnFilter,
+        filter: "text",
+      })),
+    [columns]
+  );
 
   return (
     <div>
@@ -87,58 +151,59 @@ const EyegladAmazonADs = () => {
         value={selectedTable}
         onChange={setSelectedTable}
       />
-      {console.log(
-        "Dropdown options:",
-        tables.map((table) => ({ label: table, value: table })) || []
-      )}
       <Dropdown
         id="x-axis-select"
         label="選擇X軸"
-        options={columns.map((col) => ({ label: col, value: col })) || []}
+        options={
+          columns.map((col) => ({ label: col.Header, value: col.accessor })) ||
+          []
+        }
         value={xAxis}
         onChange={setXAxis}
       />
       <Dropdown
         id="y-axis-select"
         label="選擇Y軸"
-        options={columns.map((col) => ({ label: col, value: col })) || []}
+        options={
+          columns.map((col) => ({ label: col.Header, value: col.accessor })) ||
+          []
+        }
         value={yAxis}
         onChange={setYAxis}
       />
       <Dropdown
         id="filter-column-select"
-        label="篩選條件"
-        options={columns.map((col) => ({ label: col, value: col })) || []}
+        label="篩選列"
+        options={
+          columns.map((col) => ({ label: col.Header, value: col.accessor })) ||
+          []
+        }
         value={filterColumn}
         onChange={setFilterColumn}
       />
+      <FilterInput filterValue={filterValue} setFilterValue={setFilterValue} />
       <Dropdown
         id="point-size-column-select"
         label="選擇點大小列"
-        options={columns.map((col) => ({ label: col, value: col })) || []}
+        options={
+          columns.map((col) => ({ label: col.Header, value: col.accessor })) ||
+          []
+        }
         value={pointSizeColumn}
         onChange={setPointSizeColumn}
       />
-      <div className="form-group mb-2">
-        <label>選擇時間範圍</label>
-        <div className="d-flex">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="form-control"
-          />
-          <span className="mx-2">→</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="form-control"
-          />
-        </div>
-      </div>
-      <ChartComponent data={chartData} type="line" xAxis={xAxis} />
-      <DataTable columns={columns} data={data} />
+      <DateRangeFilter
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+      />
+      <ChartWrapper data={chartData} type="line" xAxis={xAxis} />
+      <DataTable
+        columns={columnsForTable}
+        data={data}
+        onFilterChange={handleFilterChange}
+      />
     </div>
   );
 };
