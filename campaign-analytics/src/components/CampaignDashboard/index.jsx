@@ -3,10 +3,10 @@ import Papa from 'papaparse';
 import _ from 'lodash';
 
 // 導入子組件
-import BestPerformersCard from './BestPerformersCard';
-import CampaignTable from './CampaignTable';
-import TrendCharts from './TrendCharts';
-import ControlPanel from './ControlPanel';
+import BestPerformersCard from './components/BestPerformersCard';
+import CampaignTable from './components/CampaignTable';
+import TrendCharts from './components/TrendCharts';
+import ControlPanel from './components/ControlPanel';
 
 const CampaignComparison = () => {
   const [campaignData, setCampaignData] = useState([]);
