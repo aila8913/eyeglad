@@ -1,21 +1,28 @@
 import React, { useMemo } from 'react';
 
 const CampaignTable = ({ campaignData, handleSort, sortConfig }) => {
+  // 1. 首先放置 formatValue 這個輔助函數
   const formatValue = (value, type) => {
+    if (value === null) return '-';
     if (type === 'money') return `$${parseFloat(value).toFixed(2)}`;
     if (type === 'percent') return `${value}%`;
     if (type === 'number') return parseInt(value).toLocaleString();
     return value;
   };
-
+  // 2. 接著放置 useMemo hook
   const sortedData = useMemo(() => {
+    if (!Array.isArray(campaignData)) {
+      return [];
+    }
+
     return [...campaignData].sort((a, b) => {
       const aValue = parseFloat(a[sortConfig.key]) || 0;
       const bValue = parseFloat(b[sortConfig.key]) || 0;
       return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
     });
   }, [campaignData, sortConfig]);
-
+  
+  // 3. 定義表格欄位
   const tableColumns = [
     { key: 'name', label: '活動名稱', align: 'left' },
     { key: 'impressions', label: '曝光次數', type: 'number' },
@@ -30,6 +37,13 @@ const CampaignTable = ({ campaignData, handleSort, sortConfig }) => {
     { key: 'conversionRate', label: '轉換率', type: 'percent' }
   ];
 
+  // 4. 資料檢查放在渲染邏輯前
+  if (!Array.isArray(campaignData)) {
+    console.error('campaignData is not an array:', campaignData);
+    return <div>資料格式錯誤</div>;
+  }
+
+  // 5. 返回主要的渲染內容
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b">
@@ -69,6 +83,7 @@ const CampaignTable = ({ campaignData, handleSort, sortConfig }) => {
       </div>
     </div>
   );
+  
 };
 
 export default CampaignTable;

@@ -1,123 +1,111 @@
-import React, { useState, useEffect } from 'react';
-import Papa from 'papaparse';
+import React, { useState, useEffect, useMemo } from 'react';
 import _ from 'lodash';
+import { fetchCampaignData } from '../../utils/api';
+import { processCampaignData, processTrendData } from '../../utils/dataTransforms';
 
-// 導入子組件
+// 導入子元件
 import BestPerformersCard from './components/BestPerformersCard';
 import CampaignTable from './components/CampaignTable';
 import TrendCharts from './components/TrendCharts';
 import ControlPanel from './components/ControlPanel';
 
 const CampaignComparison = () => {
+  // 初始化狀態
   const [campaignData, setCampaignData] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: 'ROAS', direction: 'desc' });
   const [bestPerformers, setBestPerformers] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [timeGranularity, setTimeGranularity] = useState('day');
-  const [processedData, setProcessedData] = useState([]);
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+  const [timeGranularity, setTimeGranularity] = useState('hour');
   const [compareMode, setCompareMode] = useState('combined');
+  const [rawData, setRawData] = useState([]);
+  const [availableCampaigns, setAvailableCampaigns] = useState([]);
+  const [selectedCampaigns, setSelectedCampaigns] = useState([]);
+  const [processedData, setProcessedData] = useState([]);
 
+  // 修改後的資料載入邏輯
   useEffect(() => {
-    const fetchData = async () => {
+    let isMounted = true; // 避免在元件卸載後更新狀態
+
+    const loadInitialData = async () => {
+      if (loading) return; // 避免重複載入
+
       try {
         setLoading(true);
-        const filesResponse = await fetch('http://localhost:5000/api/files');
-        if (!filesResponse.ok) {
-          throw new Error(`HTTP error! status: ${filesResponse.status}`);
+        setError(null);
+        
+        // 取得資料
+        console.log('Fetching campaign data...');
+        const response = await fetchCampaignData();
+        
+        // 檢查元件是否還在
+        if (!isMounted) return;
+
+        // 驗證回應資料
+        if (!response || !Array.isArray(response)) {
+          throw new Error('Invalid data format received');
         }
-        const files = await filesResponse.json();
 
-        const allData = await Promise.all(
-          files.map(async (file) => {
-            const response = await fetch(`http://localhost:5000/api/data/${file}`);
-            if (!response.ok) {
-              throw new Error(`Failed to fetch ${file}`);
-            }
-            const text = await response.text();
-            return Papa.parse(text, {
-              header: true,
-              dynamicTyping: true,
-              skipEmptyLines: true
-            }).data;
-          })
-        );
+        // 設置原始資料
+        setRawData(response);
 
-        const combinedData = allData.flat();
+        // 處理日期範圍
+        if (response.length > 0) {
+          const dates = response
+            .map(item => new Date(item["Start Date"]))
+            .filter(date => !isNaN(date.getTime()));
+
+          if (dates.length > 0) {
+            const minDate = new Date(Math.min(...dates));
+            const maxDate = new Date(Math.max(...dates));
+
+            setDateRange({
+              startDate: minDate.toISOString().split('T')[0],
+              endDate: maxDate.toISOString().split('T')[0]
+            });
+          }
+        }
+
+        // 處理活動資料
+        console.log('Processing campaign data...');
+        const processedResult = processCampaignData(response);
         
-        const campaignStats = _(combinedData)
-          .groupBy('Campaign Name')
-          .map((campaign, name) => {
-            const totalImpressions = _.sumBy(campaign, 'Impressions');
-            const totalClicks = _.sumBy(campaign, 'Clicks');
-            const totalOrders = _.sumBy(campaign, '7 Day Total Orders (#)');
-            const totalSpend = _.sumBy(campaign, row => parseFloat(row['Spend'].replace('$', '')) || 0);
-            const totalSales = _.sumBy(campaign, row => parseFloat(row['7 Day Total Sales '].replace('$', '')) || 0);
-
-            return {
-              name,
-              impressions: totalImpressions,
-              clicks: totalClicks,
-              orders: totalOrders,
-              spend: totalSpend,
-              sales: totalSales,
-              CTR: totalImpressions ? (totalClicks / totalImpressions * 100).toFixed(2) : 0,
-              CPC: totalClicks ? (totalSpend / totalClicks).toFixed(2) : 0,
-              ACOS: totalSales ? (totalSpend / totalSales * 100).toFixed(2) : 0,
-              ROAS: totalSpend ? (totalSales / totalSpend).toFixed(2) : 0,
-              conversionRate: totalClicks ? (totalOrders / totalClicks * 100).toFixed(2) : 0
-            };
-          })
-          .value();
-
-        const best = {
-          highestROAS: _.maxBy(campaignStats, 'ROAS'),
-          lowestACOS: _.minBy(campaignStats.filter(c => parseFloat(c.ACOS) > 0), 'ACOS'),
-          highestCTR: _.maxBy(campaignStats, c => parseFloat(c.CTR)),
-          highestConversion: _.maxBy(campaignStats, c => parseFloat(c.conversionRate))
-        };
-
-        setBestPerformers(best);
+        if (!isMounted) return;
         
-        // 處理趨勢數據的函數
-        const processTrendData = (data) => {
-          return _(data)
-            .groupBy(row => {
-              const date = new Date(row['Start Date']);
-              if (timeGranularity === 'week') {
-                const weekStart = new Date(date);
-                weekStart.setDate(date.getDate() - date.getDay());
-                return weekStart.toISOString().split('T')[0];
-              } else if (timeGranularity === 'month') {
-                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-              }
-              return row['Start Date'];
-            })
-            .map((group, date) => ({
-              date,
-              sales: _.sumBy(group, row => parseFloat(row['7 Day Total Sales '].replace('$', '')) || 0),
-              spend: _.sumBy(group, row => parseFloat(row['Spend'].replace('$', '')) || 0),
-              ACOS: (_.sumBy(group, row => parseFloat(row['Spend'].replace('$', '')) || 0) / 
-                     _.sumBy(group, row => parseFloat(row['7 Day Total Sales '].replace('$', '')) || 1) * 100).toFixed(2)
-            }))
-            .value();
-        };
-
-        const trendData = processTrendData(combinedData);
-        setProcessedData(trendData);
+        setCampaignData(processedResult.stats);
+        setBestPerformers(processedResult.best);
         
-        setCampaignData(campaignStats);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error details:", err);
-        setError(err.message);
-        setLoading(false);
+        // 設置可用活動
+        const campaigns = processedResult.stats.map(item => item.name);
+        setAvailableCampaigns(campaigns);
+        setSelectedCampaigns(campaigns);
+
+        // 處理趨勢資料
+        const trends = processTrendData(response, timeGranularity, compareMode);
+        setProcessedData(trends);
+
+      } catch (error) {
+        console.error('資料載入錯誤:', error);
+        if (isMounted) {
+          setError(error.message || '資料載入失敗');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchData();
-  }, [timeGranularity]);
+    loadInitialData();
 
+    // 清理函數
+    return () => {
+      isMounted = false;
+    };
+  }, []); // 空依賴陣列，只在元件掛載時執行一次
+
+  // 處理排序
   const handleSort = (key) => {
     setSortConfig(prev => ({
       key,
@@ -125,9 +113,41 @@ const CampaignComparison = () => {
     }));
   };
 
-  if (loading) return <div className="p-4">Loading data...</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+  // 處理資料過濾
+  const filteredData = useMemo(() => {
+    if (selectedCampaigns.length === 0 || !processedData) return [];
+    
+    return processedData.map(data => {
+      if (compareMode === 'separate') {
+        return {
+          ...data,
+          campaignData: _.pick(data.campaignData || {}, selectedCampaigns)
+        };
+      }
+      return data;
+    });
+  }, [processedData, selectedCampaigns, compareMode]);
 
+  // 載入中狀態
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  // 錯誤狀態
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <h3 className="text-red-800 font-semibold">載入失敗</h3>
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  // 渲染主要內容
   return (
     <div className="space-y-6 p-4">
       {bestPerformers && (
@@ -139,15 +159,24 @@ const CampaignComparison = () => {
         setTimeGranularity={setTimeGranularity}
         compareMode={compareMode}
         setCompareMode={setCompareMode}
+        campaigns={availableCampaigns}
+        selectedCampaigns={selectedCampaigns}
+        setSelectedCampaigns={setSelectedCampaigns}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
       />
-      <TrendCharts processedData={processedData} />
+      
+      <TrendCharts 
+        processedData={filteredData}
+        compareMode={compareMode}
+        timeGranularity={timeGranularity}
+      />
+      
       <CampaignTable 
         campaignData={campaignData}
         handleSort={handleSort}
         sortConfig={sortConfig}
       />
-
-
     </div>
   );
 };
